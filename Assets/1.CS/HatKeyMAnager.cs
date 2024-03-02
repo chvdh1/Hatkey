@@ -7,20 +7,24 @@ using System.Text.RegularExpressions;
 using System;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using Unity.Collections;
+using UnityEngine.EventSystems;
+using System.Reflection;
 
 public class HatKeyMAnager : MonoBehaviour
 {
+    public static HatKeyMAnager manager;
+
 
     [DllImport("user32.dll")]
     public static extern bool GetCursorPos(out POINT lpPoint);
 
-   
+    public GameObject infoobj;
+    public Transform parentObj;
 
     public Text m_Pos;
     public int count;
     public int startNum;
     public Info[] m_List;
-    public Pool pool;
     public Text stat;
     public InputField startNumText;
 
@@ -29,6 +33,20 @@ public class HatKeyMAnager : MonoBehaviour
 
     public GameObject keyPop;
 
+    public InputField repetitionText;
+
+    public GameObject mousePop;
+    public Text mouseinfo;
+
+    public GameObject keyPopDU;
+    public GameObject keyBtns;
+    public Text keyInfo;
+    public string keycode;
+
+
+
+    public bool startM;
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT
     {
@@ -36,6 +54,10 @@ public class HatKeyMAnager : MonoBehaviour
         public int Y;
     }
 
+    private void Awake()
+    {
+        manager = this;
+    }
 
     private void Start()
     {
@@ -58,18 +80,54 @@ public class HatKeyMAnager : MonoBehaviour
        );
 
 
+        repetitionText.onValueChanged.AddListener(
+           (word) => repetitionText.text =
+           Regex.Replace(word, @"[^0-9]", "")
+       );
+
         startNumText.text = "1";
+        repetitionText.text = "0";
     }
 
     private void Update()
     {
-        if(!keyPop.activeSelf)
+        if(keyPop.activeSelf)
+        {
+            if (Input.anyKeyDown)
+            {
+                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+                {
+                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2" && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
+                    {
+                        Debug.Log("눌린 키: " + keyCode);
+                        SetKey(keyCode.ToString());
+                    }
+                }
+            }
+        }
+        else if(keyPopDU.activeSelf && !keyBtns.activeSelf)
+        {
+            if (Input.anyKeyDown)
+            {
+                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
+                {
+                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2" && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
+                    {
+                        Debug.Log("눌린 키: " + keyCode);
+                        keycode = keyCode.ToString();
+                        keyInfo.text = $"{keycode} 키를\n설정하세요.";
+                        keyBtns.SetActive(true);
+                    }
+                }
+            }
+        }
+        else
         {
             if (Input.GetKeyDown(KeyCode.F10))
             {
                 count++;
                 m_List = new Info[count];
-                Info info = pool.Get(0).GetComponent<Info>();
+                Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
                 info.CL();
                 info.num.text = count.ToString();
 
@@ -82,14 +140,14 @@ public class HatKeyMAnager : MonoBehaviour
                 info.move = true;
                 for (int i = 0; i < m_List.Length; i++)
                 {
-                    m_List[i] = pool.transform.GetChild(i).GetComponent<Info>();
+                    m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
                 }
             }
             if (Input.GetKeyDown(KeyCode.F11))
             {
                 count++;
                 m_List = new Info[count];
-                Info info = pool.Get(0).GetComponent<Info>();
+                Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
                 info.CL();
                 info.num.text = count.ToString();
 
@@ -101,35 +159,31 @@ public class HatKeyMAnager : MonoBehaviour
 
                 for (int i = 0; i < m_List.Length; i++)
                 {
-                    m_List[i] = pool.transform.GetChild(i).GetComponent<Info>();
+                    m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
                 }
             }
-        }
-        else
-        {
-            if (Input.anyKeyDown)
+
+            if (Input.GetKeyDown(KeyCode.F1) )
             {
-                foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
-                {
-                    if (Input.GetKeyDown(keyCode))
-                    {
-                        Debug.Log("눌린 키: " + keyCode);
-                        int value = (byte)keyCode;
-                        string hex = "0x" + value.ToString("X2");
-                        byte[] keyBytes = System.Text.Encoding.ASCII.GetBytes(hex);
-                        byte key = keyBytes[0];
-                        Debug.Log(key);
-                        SetKey(key, keyCode.ToString());
-                    }
-                }
+                if (!startM)
+                    MacrosStart();
+                else
+                    startM = false;
             }
+
         }
        
 
     }
 
+    //string keyInfo(string key)
+    //{
+
+    //}
+
     public void MacrosStart()
     {
+        startM = true;
         startNumText.text = Regex.Replace(startNumText.text, @"[^0-9]", "");
         if(int.Parse(startNumText.text) > 0)
         {
@@ -142,7 +196,7 @@ public class HatKeyMAnager : MonoBehaviour
             else
             {
                 stat.text = "";
-                StartCoroutine(startM());
+                StartCoroutine(StartM());
             }
         }
         else
@@ -151,22 +205,42 @@ public class HatKeyMAnager : MonoBehaviour
         }
     }
 
-    IEnumerator startM()
+    IEnumerator StartM()
     {
-
+        int repetition = int.Parse(repetitionText.text);
+        int start = startNum;
         yield return new WaitForFixedUpdate();
-        while(startNum-1 < m_List.Length)
+        while(start - 1 < m_List.Length && startM)
         {
             yield return new WaitForFixedUpdate();
-            if (m_List[startNum-1].click)
-                m_List[startNum-1].MouseEvent();
-            else if (m_List[startNum - 1].move)
-                m_List[startNum - 1].MoveCursor();
-            else if (m_List[startNum - 1].key)
-                m_List[startNum - 1].KeyMacro();
+            if (m_List[start - 1].click)
+                m_List[start - 1].MouseEvent();
+            else if (m_List[start - 1].move)
+                m_List[start - 1].MoveCursor();
+            else if (m_List[start - 1].key)
+                m_List[start - 1].KeyMacro();
 
-            yield return new WaitForSeconds(m_List[startNum - 1].time);
-            startNum++;
+            else if (m_List[start - 1].m_Down)
+                m_List[start - 1].MouseDown();
+            else if (m_List[start - 1].m_Up)
+                m_List[start - 1].MouseUp();
+            else if (m_List[start - 1].k_Down)
+                m_List[start - 1].KeyDown();
+            else if (m_List[start - 1].k_Up)
+                m_List[start - 1].KeyUp();
+
+            yield return new WaitForSeconds(m_List[start - 1].time);
+            start++;
+        }
+        yield return new WaitForFixedUpdate();
+        if (repetition > 0 && startM)
+        {
+            repetitionText.text = (repetition - 1).ToString();
+            MacrosStart();
+        }
+        else
+        {
+            startM = false;
         }
     }
 
@@ -191,7 +265,7 @@ public class HatKeyMAnager : MonoBehaviour
         {
             count++;
             m_List = new Info[count];
-            Info info = pool.Get(0).GetComponent<Info>();
+            Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
             info.CL();
             info.num.text = count.ToString();
 
@@ -203,7 +277,7 @@ public class HatKeyMAnager : MonoBehaviour
 
             for (int i = 0; i < m_List.Length; i++)
             {
-                m_List[i] = pool.transform.GetChild(i).GetComponent<Info>();
+                m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
             }
 
             DelayPop();
@@ -222,27 +296,175 @@ public class HatKeyMAnager : MonoBehaviour
             keyPop.SetActive(true);
     }
 
-    public void SetKey(byte key, string text)
+    public void SetKey(string text)
     {
         count++;
         m_List = new Info[count];
-        Info info = pool.Get(0).GetComponent<Info>();
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
         info.CL();
         info.num.text = count.ToString();
 
         info.time = 0.033f;
         info.com.text = $"'{text}' 입력";
-        info.keybd = key;
+        info.keybd = text;
         info.mx = 0;
         info.my = 0;
         info.key = true;
-        Debug.Log(info.keybd);
         for (int i = 0; i < m_List.Length; i++)
         {
-            m_List[i] = pool.transform.GetChild(i).GetComponent<Info>();
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
         }
 
         KeyPop();
+    }
+
+    public void Del()
+    {
+        GameObject Btn = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
+
+        Destroy(Btn);
+
+
+        count--;
+        m_List = new Info[count];
+
+        StartCoroutine(Assign());
+       
+    }
+
+    IEnumerator Assign()
+    {
+
+        yield return new WaitForFixedUpdate();
+        for (int i = 0; i < parentObj.childCount; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+            m_List[i].num.text = (i + 1).ToString();
+            yield return new WaitForFixedUpdate();
+        }
+    }
+
+    public void MousePop()
+    {
+        if(mousePop.activeSelf)
+            mousePop.SetActive(false);
+        
+        else
+        {
+            mousePop.SetActive(true);
+            mouseinfo.text = "마우스 : 좌";
+        }
+            
+
+    }
+
+    public void MouseL()
+    {
+        mouseinfo.text = "마우스 : 좌";
+    }
+    public void MouseR() { mouseinfo.text = "마우스 : 우"; }
+    public void MousePress()
+    {
+        count++;
+        m_List = new Info[count];
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+        info.CL();
+        info.num.text = count.ToString();
+
+        info.mouse = mouseinfo.text == "마우스 : 우" ? 1 : 0;
+        info.time = 0.033f;
+        info.com.text = $"{mouseinfo.text} 누르기";
+        info.m_Down = true;
+        Debug.Log(info.keybd);
+        for (int i = 0; i < m_List.Length; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+        }
+
+        MousePop();
+    }
+    public void MouseUp()
+    {
+        count++;
+        m_List = new Info[count];
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+        info.CL();
+        info.num.text = count.ToString();
+
+        info.mouse = mouseinfo.text == "마우스 : 우" ? 1 : 0;
+        info.time = 0.033f;
+        info.com.text = $"{mouseinfo.text} 때기";
+        info.m_Up = true;
+        Debug.Log(info.keybd);
+        for (int i = 0; i < m_List.Length; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+        }
+
+        MousePop();
+    }
+
+
+    public void KeyPopDU()
+    {
+        if(keyPopDU.activeSelf)
+        {
+            keyPopDU.SetActive(false);
+            keycode = "";
+        }
+          
+
+        else
+        {
+            keyPopDU.SetActive(true);
+            keyInfo.text = "원하는 키를\n눌러주세요.";
+            keyBtns.SetActive(false);
+        }
+    }
+
+
+    public void KeyPress()
+    {
+        count++;
+        m_List = new Info[count];
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+        info.CL();
+        info.num.text = count.ToString();
+
+        info.time = 0.033f;
+        info.com.text = $"'{keycode}' 누르기";
+        info.keybd = keycode;
+        info.mx = 0;
+        info.my = 0;
+        info.k_Down = true;
+        for (int i = 0; i < m_List.Length; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+        }
+
+        KeyPopDU();
+
+    }
+    public void KeyUp()
+    {
+        count++;
+        m_List = new Info[count];
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+        info.CL();
+        info.num.text = count.ToString();
+
+        info.time = 0.033f;
+        info.com.text = $"'{keycode}' 때기";
+        info.keybd = keycode;
+        info.mx = 0;
+        info.my = 0;
+        info.k_Up = true;
+        for (int i = 0; i < m_List.Length; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+        }
+
+        KeyPopDU();
     }
 
 }
