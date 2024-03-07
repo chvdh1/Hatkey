@@ -1,0 +1,17 @@
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\alloc.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\alloc.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\assert.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\assert.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\check_cycles.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\check_cycles.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\edge.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\edge.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\execution_engine.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\execution_engine.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\graph.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\graph.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\memory_accessor.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\memory_accessor.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\memory_descriptor.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\memory_descriptor.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\memory_descriptor_ref.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\memory_descriptor_ref.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\memory_descriptor_view.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\memory_descriptor_view.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\metadata.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\metadata.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\metatypes.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\metatypes.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\node.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\node.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\passes\communications.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\communications.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\search.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\search.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\subgraphs.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\subgraphs.obj
+C:\Users\82108\Documents\GitHub\Hatkey\3rdparty\ade\ade-0.1.2d\sources\ade\source\topological_sort.cpp;C:\Users\82108\Documents\GitHub\Hatkey\ade.dir\Debug\topological_sort.obj

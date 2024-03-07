@@ -77,6 +77,8 @@ public class DataManager : MonoBehaviour
     public Text stat;
     public Text datapos;
 
+    public static string exepath = $"{System.IO.Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName)}\\" + 
+         System.IO.Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
 
     private void Start()
     {

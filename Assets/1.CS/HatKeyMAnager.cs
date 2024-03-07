@@ -1,14 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.InteropServices;
 using UnityEngine.UI;
 using System.Text.RegularExpressions;
-using System;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
-using Unity.Collections;
 using UnityEngine.EventSystems;
-using System.Reflection;
 
 public class HatKeyMAnager : MonoBehaviour
 {
@@ -57,6 +52,7 @@ public class HatKeyMAnager : MonoBehaviour
     private void Awake()
     {
         manager = this;
+        Application.runInBackground = true;
     }
 
     private void Start()
