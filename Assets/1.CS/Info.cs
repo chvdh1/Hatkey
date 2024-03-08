@@ -1,6 +1,11 @@
 using System.Runtime.InteropServices;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+using OpenCvSharp;
+using Unity.VisualScripting;
+
 
 public class Info : MonoBehaviour
 {
@@ -23,7 +28,9 @@ public class Info : MonoBehaviour
 
     public const int VK_LBUTTON = 0x01;
     public const int VK_RBUTTON = 0x02;
-   
+
+    Texture2D templateImage;
+
     public Text num;
     public Text com;
     public string keybd;
@@ -31,6 +38,7 @@ public class Info : MonoBehaviour
     public int mx;
     public int my;
     public float time;
+    public string paths;
 
     public int mouse;
     public bool move;
@@ -41,8 +49,10 @@ public class Info : MonoBehaviour
     public bool k_Down;
     public bool k_Up;
     public bool delays;
+    public bool image;
 
     public HatKeyMAnager manager;
+
 
     private void Awake()
     {
@@ -89,6 +99,47 @@ public class Info : MonoBehaviour
         else
             keybd_event(VK_RBUTTON, 0, KEYEVENTF_KEYUP, 0);
     }
+    public void Image()
+    {
+        StartCoroutine(TemplateImage());
+    }
+
+    IEnumerator TemplateImage()
+    {
+        string filePath = paths;
+
+        //UnityWebRequest www = UnityWebRequestTexture.GetTexture(filePath);
+        //yield return www.SendWebRequest();
+
+        //if (www.result != UnityWebRequest.Result.Success)
+        //{
+        //    Debug.Log(www.error);
+        //}
+        //else
+        //{
+        //    templateImage = ((DownloadHandlerTexture)www.downloadHandler).texture;
+        //}
+
+        yield return new WaitForFixedUpdate();
+        // 템플릿 이미지 로드
+        Mat templateImage1 = Cv2.ImRead(filePath, ImreadModes.Color); //templateImage;// 
+
+        // 화면 이미지 캡처
+        ScreenCapture.CaptureScreenshot("screenshot.png");
+        Mat screenImage = Cv2.ImRead("screenshot.png", ImreadModes.Color);
+
+        // 템플릿 매칭 수행
+        Mat resultImage = screenImage.MatchTemplate(templateImage1, TemplateMatchModes.CCoeffNormed);
+
+        // 결과 이미지에서 가장 높은 일치도를 가진 위치 찾기
+        double minVal, maxVal;
+        OpenCvSharp.Point minLoc, maxLoc;
+        Cv2.MinMaxLoc(resultImage, out minVal, out maxVal, out minLoc, out maxLoc);
+
+        // 가장 높은 일치도를 가진 위치로 마우스 커서 이동
+        SetCursorPos(maxLoc.X, maxLoc.Y);
+    }
+
 
     // 매크로 실행 함수
     public void KeyMacro()
@@ -115,7 +166,7 @@ public class Info : MonoBehaviour
         time = 0.33f;
         num.text = "";
         com.text = "";
-
+        paths = "";
         move = false;
         click = false;
         key = false;
@@ -125,6 +176,7 @@ public class Info : MonoBehaviour
         m_Up = false;
         k_Down = false;
         k_Up = false;
+        image = false;
 
     }
 

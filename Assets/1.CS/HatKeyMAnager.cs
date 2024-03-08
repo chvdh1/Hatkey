@@ -172,10 +172,6 @@ public class HatKeyMAnager : MonoBehaviour
 
     }
 
-    //string keyInfo(string key)
-    //{
-
-    //}
 
     public void MacrosStart()
     {
@@ -224,6 +220,8 @@ public class HatKeyMAnager : MonoBehaviour
                 m_List[start - 1].KeyDown();
             else if (m_List[start - 1].k_Up)
                 m_List[start - 1].KeyUp();
+            else if (m_List[start - 1].image)
+                m_List[start - 1].Image();
 
             yield return new WaitForSeconds(m_List[start - 1].time);
             start++;
@@ -314,6 +312,8 @@ public class HatKeyMAnager : MonoBehaviour
         KeyPop();
     }
 
+
+    //목록 지우기 기능
     public void Del()
     {
         GameObject Btn = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
@@ -340,6 +340,8 @@ public class HatKeyMAnager : MonoBehaviour
         }
     }
 
+
+    //마우스 좌, 우 , 누르기, 때기 기능
     public void MousePop()
     {
         if(mousePop.activeSelf)
@@ -400,7 +402,7 @@ public class HatKeyMAnager : MonoBehaviour
         MousePop();
     }
 
-
+    //키보드 누르기, 때기 기능
     public void KeyPopDU()
     {
         if(keyPopDU.activeSelf)
@@ -417,8 +419,6 @@ public class HatKeyMAnager : MonoBehaviour
             keyBtns.SetActive(false);
         }
     }
-
-
     public void KeyPress()
     {
         count++;
@@ -461,6 +461,47 @@ public class HatKeyMAnager : MonoBehaviour
         }
 
         KeyPopDU();
+    }
+
+
+    //이미지 찾아 마우스 위치하기 기능
+    public GameObject imagePop;
+    public InputField imageInputField;
+    public Text imagestat;
+
+    public void ImagePop()
+    {
+        if (imagePop.activeSelf)
+        {
+            imagePop.SetActive(false);
+        }
+        else
+        {
+            imagePop.SetActive(true);
+            imagestat.text = "이미지의 파일 경로를 적어주세요.";
+            imageInputField.text = "";
+        }
+    }
+
+    public void ImageSet()
+    {
+        count++;
+        m_List = new Info[count];
+        Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+        info.CL();
+        info.num.text = count.ToString();
+        info.paths = imageInputField.text;
+        Debug.Log(info.paths);
+
+        info.time = 1f;
+        info.com.text = $"'{imageInputField.text}' 유사 이미지 찾기";
+        info.image = true;
+        for (int i = 0; i < m_List.Length; i++)
+        {
+            m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+        }
+
+        ImagePop();
     }
 
 }
