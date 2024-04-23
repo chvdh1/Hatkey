@@ -38,8 +38,8 @@ public class HatKeyMAnager : MonoBehaviour
     public Text keyInfo;
     public string keycode;
 
-
-
+    public Image Tst;
+    public Image deskTst;
     public bool startM;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -491,11 +491,12 @@ public class HatKeyMAnager : MonoBehaviour
         info.CL();
         info.num.text = count.ToString();
         info.paths = imageInputField.text;
-        Debug.Log(info.paths);
 
         info.time = 1f;
         info.com.text = $"'{imageInputField.text}' 유사 이미지 찾기";
+
         info.image = true;
+
         for (int i = 0; i < m_List.Length; i++)
         {
             m_List[i] = parentObj.GetChild(i).GetComponent<Info>();

@@ -3,7 +3,13 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
+using System.Drawing;
+using System.Drawing.Imaging;
 using OpenCvSharp;
+using System.IO;
+using System.Diagnostics;
+using System.Text;
+using System.Net;
 using Unity.VisualScripting;
 
 
@@ -16,20 +22,18 @@ public class Info : MonoBehaviour
     static extern void mouse_event(uint dwFlags);
 
 
-    // user32.dll¿¡¼­ °¡Á®¿Â keybd_event ÇÔ¼ö
+    // user32.dllì—ì„œ ê°€ì ¸ì˜¨ keybd_event í•¨ìˆ˜
     [DllImport("user32.dll")]
     public static extern void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
 
-    private const int KEYEVENTF_KEYDOWN = 0x0000;// Å°¸¦ ´©¸£´Â »ó¼ö °ª
-    private const int KEYEVENTF_KEYUP = 0x0002; // Å°¸¦ ¶¼´Â »ó¼ö °ª
+    private const int KEYEVENTF_KEYDOWN = 0x0000;// í‚¤ë¥¼ ëˆ„ë¥´ëŠ” ìƒìˆ˜ ê°’
+    private const int KEYEVENTF_KEYUP = 0x0002; // í‚¤ë¥¼ ë–¼ëŠ” ìƒìˆ˜ ê°’
 
-    const uint LBUTTONDOWN = 0x0002;    // ¿ŞÂÊ ¸¶¿ì½º ¹öÆ° ´©¸§
-    const uint LBUTTONUP = 0x0004;      // ¿ŞÂÊ ¸¶¿ì½º ¹öÆ° ¶«
+    const uint LBUTTONDOWN = 0x0002;    // ì™¼ìª½ ë§ˆìš°ìŠ¤ ë²„íŠ¼ ëˆ„ë¦„
+    const uint LBUTTONUP = 0x0004;      // ì™¼ìª½ ë§ˆìš°ìŠ¤ ë²„íŠ¼ ë•œ
 
     public const int VK_LBUTTON = 0x01;
     public const int VK_RBUTTON = 0x02;
-
-    Texture2D templateImage;
 
     public Text num;
     public Text com;
@@ -39,6 +43,7 @@ public class Info : MonoBehaviour
     public int my;
     public float time;
     public string paths;
+    public string pyText;
 
     public int mouse;
     public bool move;
@@ -52,8 +57,7 @@ public class Info : MonoBehaviour
     public bool image;
 
     public HatKeyMAnager manager;
-
-
+    string path;
     private void Awake()
     {
         num = transform.GetChild(0).GetChild(0).GetComponent<Text>();
@@ -106,45 +110,97 @@ public class Info : MonoBehaviour
 
     IEnumerator TemplateImage()
     {
-        string filePath = paths;
+        //ì´ë¯¸ì§€ ë¶ˆëŸ¬ì˜¤ê¸°(template)------------------------
+        path = paths;
 
-        //UnityWebRequest www = UnityWebRequestTexture.GetTexture(filePath);
-        //yield return www.SendWebRequest();
+        Texture2D myTexture = null;
 
-        //if (www.result != UnityWebRequest.Result.Success)
-        //{
-        //    Debug.Log(www.error);
-        //}
-        //else
-        //{
-        //    templateImage = ((DownloadHandlerTexture)www.downloadHandler).texture;
-        //}
+        using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(path))
+        {
+            yield return www.SendWebRequest();
 
-        yield return new WaitForFixedUpdate();
-        // ÅÛÇÃ¸´ ÀÌ¹ÌÁö ·Îµå
-        Mat templateImage1 = Cv2.ImRead(filePath, ImreadModes.Color); //templateImage;// 
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                UnityEngine.Debug.Log(www.error);
+            }
+            else
+            {
+                myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+            }
+        }
 
-        // È­¸é ÀÌ¹ÌÁö Ä¸Ã³
-        ScreenCapture.CaptureScreenshot("screenshot.png");
-        Mat screenImage = Cv2.ImRead("screenshot.png", ImreadModes.Color);
+        //í™”ë©´ ì „ì²´ ìº¡ì²˜(target)------------------------
+        // PowerShell ì»¤ë§¨ë“œë¥¼ ì´ìš©í•œ ìŠ¤í¬ë¦°ìƒ· ìº¡ì²˜ ë° ì €ì¥
+        string path1 = "C:\\Users\\Public\\DesktopScreenshot.png"; // ì €ì¥í•  ê²½ë¡œì™€ íŒŒì¼ëª…
+        string psCommand = $"Add-Type -AssemblyName System.Windows.Forms; " +
+                           $"[System.Windows.Forms.Screen]::AllScreens | ForEach-Object {"{"} " +
+                           $"$bounds = $_.Bounds; " +
+                           $"$bitmap = New-Object System.Drawing.Bitmap $bounds.width, $bounds.height; " +
+                           $"$graphics = [System.Drawing.Graphics]::FromImage($bitmap); " +
+                           $"$graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size); " +
+                           $"$bitmap.Save('{path1}'); " +
+                           $"$graphics.Dispose(); " +
+                           $"$bitmap.Dispose(); " +
+                           "};";
 
-        // ÅÛÇÃ¸´ ¸ÅÄª ¼öÇà
-        Mat resultImage = screenImage.MatchTemplate(templateImage1, TemplateMatchModes.CCoeffNormed);
-
-        // °á°ú ÀÌ¹ÌÁö¿¡¼­ °¡Àå ³ôÀº ÀÏÄ¡µµ¸¦ °¡Áø À§Ä¡ Ã£±â
-        double minVal, maxVal;
-        OpenCvSharp.Point minLoc, maxLoc;
-        Cv2.MinMaxLoc(resultImage, out minVal, out maxVal, out minLoc, out maxLoc);
-
-        // °¡Àå ³ôÀº ÀÏÄ¡µµ¸¦ °¡Áø À§Ä¡·Î ¸¶¿ì½º Ä¿¼­ ÀÌµ¿
-        SetCursorPos(maxLoc.X, maxLoc.Y);
+        ProcessStartInfo startInfo = new ProcessStartInfo()
+        {
+            FileName = "powershell.exe",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        using (Process process = Process.Start(startInfo))
+        {
+            process.WaitForExit(); // PowerShell ìŠ¤í¬ë¦½íŠ¸ ì‹¤í–‰ì´ ì™„ë£Œë  ë•Œê¹Œì§€ ëŒ€ê¸°
+        }
+        //------------------------í™”ë©´ ì „ì²´ ìº¡ì²˜(target)
+        StartCoroutine(FindSubimagePosition());
     }
 
+    //string testPath = "C:\\Users\\82108\\Desktop\\ttest\\test.py";
+    string mainImagePath = "C:\\Users\\Public\\DesktopScreenshot.png";
 
-    // ¸ÅÅ©·Î ½ÇÇà ÇÔ¼ö
+    IEnumerator FindSubimagePosition()
+    {
+        ProcessStartInfo psi = new ProcessStartInfo();
+        psi.FileName = "py";
+        psi.Arguments = string.Format("{0} {1} {2}", "test.py", mainImagePath, path);
+        psi.UseShellExecute = false;
+        psi.CreateNoWindow = true;
+        psi.RedirectStandardOutput = true;
+        psi.RedirectStandardError = true;
+
+        Process process = new Process();
+        process.StartInfo = psi;
+        process.Start();
+
+        string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+
+        process.WaitForExit();
+
+        if (string.IsNullOrEmpty(error))
+        {
+            // JSON ë¬¸ìì—´ì„ íŒŒì‹±í•˜ì—¬ ì‚¬ìš©
+            var position = JsonUtility.FromJson<Vector2>(output);
+            UnityEngine.Debug.Log($"Position: {position.x}, {position.y}");
+            mx = (int)position.x+1;
+            my = (int)position.y+1;
+            MoveCursor();
+        }
+        else
+        {
+            UnityEngine.Debug.LogError("Error: " + error);
+        }
+
+        yield return null;
+    }
+
+    // ë§¤í¬ë¡œ ì‹¤í–‰ í•¨ìˆ˜
     public void KeyMacro()
     {
-        // keybd_event ÇÔ¼ö¸¦ »ç¿ëÇÏ¿© Å°¸¦ ´©¸£°í ¶¼´Â ¸ÅÅ©·Î¸¦ ½ÇÇàÇÕ´Ï´Ù.
+        // keybd_event í•¨ìˆ˜ë¥¼ ì‚¬ìš©í•˜ì—¬ í‚¤ë¥¼ ëˆ„ë¥´ê³  ë–¼ëŠ” ë§¤í¬ë¡œë¥¼ ì‹¤í–‰í•©ë‹ˆë‹¤.
         keybd_event(Key(), 0, KEYEVENTF_KEYDOWN, 0);
         keybd_event(Key(), 0, KEYEVENTF_KEYUP, 0);
     }

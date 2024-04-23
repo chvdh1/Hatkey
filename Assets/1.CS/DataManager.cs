@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using Unity.VisualScripting;
 
 public class JData
 {
@@ -23,18 +24,27 @@ public class JData
     public bool[] key;
     public bool[] k_Down;
     public bool[] k_Up;
-    public bool[] delays; 
+    public bool[] delays;
+    public bool[] image;
+    public string[] paths;
+
+    public int[] imagex;
+    public int[] imagey;
+    public int[] imagelength;
+    public int[] imagehHeight;
 
     public JData(HatKeyMAnager manager)
     {
         count = manager.count;
 
         m_List = new Info[count];
+
         time = new float[count];
         keybd = new string[count];
         mx = new int[count];
         my = new int[count];
         mouse = new int[count];
+
         move = new bool[count];
         click = new bool[count];
         m_Down = new bool[count];
@@ -43,6 +53,13 @@ public class JData
         k_Down = new bool[count];
         k_Up = new bool[count];
         delays = new bool[count];
+        image = new bool[count];
+        paths = new string[count];
+
+        imagex = new int[count];
+        imagey = new int[count];
+        imagelength = new int[count];
+        imagehHeight = new int[count];
 
 
         for (int i = 0; i < count; i++)
@@ -63,6 +80,9 @@ public class JData
             k_Down[i] = manager.m_List[i].k_Down;
             k_Up[i] = manager.m_List[i].k_Up;
             delays[i] = manager.m_List[i].delays;
+            image[i] = manager.m_List[i].image;
+            paths[i] = manager.m_List[i].paths;
+          
         }   
     }
 }
@@ -116,12 +136,6 @@ public class DataManager : MonoBehaviour
         JData data = new JData(manager);
         string json = JsonUtility.ToJson(data);
 
-        //// 완성된 json string 문자열을 8비트 부호없는 정수로 변환
-        //byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
-
-        //// 변환된 바이트배열을 base-64 인코딩된 문자열로 변환
-        //string encodedJson = System.Convert.ToBase64String(bytes);
-
         // 변환된 값을 저장
         File.WriteAllText(path, json);
 
@@ -154,13 +168,6 @@ public class DataManager : MonoBehaviour
 
         // json으로 저장된 문자열을 로드한다.
         string jsonFromFile = File.ReadAllText(path);
-
-        //// 읽어온 base-64 인코딩 문자열을 바이트배열로 변환
-        //byte[] bytes = System.Convert.FromBase64String(jsonFromFile);
-
-        //// 8비트 부호없는 정수를 json 문자열로 변환
-        //string decodedJson = System.Text.Encoding.UTF8.GetString(bytes);
-
 
         JData data = JsonUtility.FromJson<JData>(jsonFromFile);
 
@@ -195,6 +202,10 @@ public class DataManager : MonoBehaviour
             info.k_Up = data.k_Up[i];
             info.delays = data.delays[i];
 
+            info.image = data.image[i];
+            info.paths = data.paths[i];
+             
+
             string mtext = info.mouse == 1 ? "마우스 : 우" : "마우스 : 좌";
 
             info.com.text = info.move ? $"마우스 위치값: {info.mx},{info.my}" :
@@ -204,7 +215,10 @@ public class DataManager : MonoBehaviour
                 info.key ? $"'{info.keybd}' 입력" :
                  info.k_Down ? $"'{info.keybd}' 누르기" :
                   info.k_Up ? $"'{info.keybd}' 때기" :
+                   info.image ? $"'{info.paths}' 유사 이미지 찾기":
                $"{info.time}초 지연";
+
+
 
             manager.m_List[i] = info;
            yield return null;
