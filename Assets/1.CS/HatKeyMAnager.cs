@@ -42,6 +42,9 @@ public class HatKeyMAnager : MonoBehaviour
     public Image deskTst;
     public bool startM;
 
+    public Text turn;
+    public Text startNstop;
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT
     {
@@ -83,6 +86,8 @@ public class HatKeyMAnager : MonoBehaviour
 
         startNumText.text = "1";
         repetitionText.text = "0";
+        turn.text = "";
+        startNstop.text = "시작하기";
     }
 
     private void Update()
@@ -175,26 +180,39 @@ public class HatKeyMAnager : MonoBehaviour
 
     public void MacrosStart()
     {
-        startM = true;
-        startNumText.text = Regex.Replace(startNumText.text, @"[^0-9]", "");
-        if(int.Parse(startNumText.text) > 0)
+        if(!startM)
         {
-            startNum = int.Parse(startNumText.text);
+            startM = true;
 
-            if (startNum > m_List.Length+1 || startNum < 0)
+            startNumText.text = Regex.Replace(startNumText.text, @"[^0-9]", "");
+            if (int.Parse(startNumText.text) > 0)
             {
-                stat.text = "시작 번호를 다르게 설정해주세요.";
+                startNum = int.Parse(startNumText.text);
+
+                if (startNum > m_List.Length + 1 || startNum < 0)
+                {
+                    stat.text = "시작 번호를 다르게 설정해주세요.";
+                }
+                else
+                {
+                    stat.text = "";
+                    startNstop.text = "종료하기";
+                    StartCoroutine(StartM());
+                }
             }
             else
             {
-                stat.text = "";
-                StartCoroutine(StartM());
+                stat.text = "시작 번호를 다르게 설정해주세요.";
             }
         }
         else
         {
-            stat.text = "시작 번호를 다르게 설정해주세요.";
+            startM = false;
+            startNstop.text = "시작하기";
+            turn.text = "";
+            StopCoroutine(StartM());
         }
+       
     }
 
     IEnumerator StartM()
@@ -202,8 +220,11 @@ public class HatKeyMAnager : MonoBehaviour
         int repetition = int.Parse(repetitionText.text);
         int start = startNum;
         yield return new WaitForFixedUpdate();
-        while(start - 1 < m_List.Length && startM)
+       
+        while (start - 1 < m_List.Length && startM)
         {
+            turn.text = $"진행중 : {start}";
+            
             yield return new WaitForFixedUpdate();
             if (m_List[start - 1].click)
                 m_List[start - 1].MouseEvent();
@@ -223,6 +244,7 @@ public class HatKeyMAnager : MonoBehaviour
             else if (m_List[start - 1].image)
                 m_List[start - 1].Image();
 
+
             yield return new WaitForSeconds(m_List[start - 1].time);
             start++;
         }
@@ -230,11 +252,13 @@ public class HatKeyMAnager : MonoBehaviour
         if (repetition > 0 && startM)
         {
             repetitionText.text = (repetition - 1).ToString();
-            MacrosStart();
+            StartCoroutine(StartM());
         }
         else
         {
             startM = false;
+            startNstop.text = "시작하기";
+            turn.text = "";
         }
     }
 

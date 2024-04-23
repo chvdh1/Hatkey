@@ -3,15 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
-using System.Drawing;
-using System.Drawing.Imaging;
-using OpenCvSharp;
-using System.IO;
 using System.Diagnostics;
-using System.Text;
-using System.Net;
-using Unity.VisualScripting;
-
 
 public class Info : MonoBehaviour
 {
