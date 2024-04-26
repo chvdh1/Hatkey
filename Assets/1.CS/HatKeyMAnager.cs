@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using UnityEngine.UI;
 using System.Text.RegularExpressions;
 using UnityEngine.EventSystems;
+using Unity.VisualScripting;
 
 public class HatKeyMAnager : MonoBehaviour
 {
@@ -38,12 +39,21 @@ public class HatKeyMAnager : MonoBehaviour
     public Text keyInfo;
     public string keycode;
 
-    public Image Tst;
-    public Image deskTst;
     public bool startM;
 
     public Text turn;
     public Text startNstop;
+
+    public Info modify;
+    public GameObject mMovePop;
+    public GameObject mKeyPop;
+    public GameObject mMousePop;
+    public GameObject mDelayPop;
+    public GameObject mMKeyPopDU;
+    public GameObject mImagePop;
+
+    public GameObject mKeyBtns;
+    public Text mKeyInfo;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT
@@ -89,38 +99,72 @@ public class HatKeyMAnager : MonoBehaviour
         turn.text = "";
         startNstop.text = "시작하기";
     }
-
+    //public GameObject mImagePop;
     private void Update()
     {
-        if(keyPop.activeSelf)
+        if(keyPop.activeSelf || mKeyPop.activeSelf)
         {
             if (Input.anyKeyDown)
             {
                 foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
                 {
-                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2" && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
+                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" 
+                        && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2"
+                        && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
                     {
-                        Debug.Log("눌린 키: " + keyCode);
-                        SetKey(keyCode.ToString());
+                        if(!mKeyPop.activeSelf)
+                        {
+                            Debug.Log("눌린 키: " + keyCode);
+                            SetKey(keyCode.ToString());
+                        }
+                        else
+                        {
+                            //수정 내용
+                            modify.com.text = $"'{keyCode}' 입력";
+                            modify.keybd = keyCode.ToString();
+                            ModifyExit();
+                        }
                     }
                 }
             }
         }
-        else if(keyPopDU.activeSelf && !keyBtns.activeSelf)
+        else if((keyPopDU.activeSelf && !keyBtns.activeSelf) ||
+            (mMKeyPopDU.activeSelf&& !mKeyBtns.activeSelf))
         {
             if (Input.anyKeyDown)
             {
                 foreach (KeyCode keyCode in System.Enum.GetValues(typeof(KeyCode)))
                 {
-                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2" && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
+                    if (Input.GetKeyDown(keyCode) && keyCode.ToString() != "Mouse1" 
+                        && keyCode.ToString() != "Mouse0" && keyCode.ToString() != "Mouse2"
+                        && keyCode.ToString() != "Mouse3" && keyCode.ToString() != "Mouse4")
                     {
-                        Debug.Log("눌린 키: " + keyCode);
-                        keycode = keyCode.ToString();
-                        keyInfo.text = $"{keycode} 키를\n설정하세요.";
-                        keyBtns.SetActive(true);
+                        if (!mMKeyPopDU.activeSelf)
+                        {
+                            Debug.Log("눌린 키: " + keyCode);
+                            keycode = keyCode.ToString();
+                            keyInfo.text = $"{keycode} 키를\n설정하세요.";
+                            keyBtns.SetActive(true);
+                        }
+                        else
+                        {
+                            //수정 내용
+                            keycode = keyCode.ToString();
+                            mKeyInfo.text = $"{keycode} 키를\n설정하세요.";
+                            mKeyBtns.SetActive(true);
+                        }
                     }
                 }
             }
+        }
+        else if(mMovePop.activeSelf && Input.GetKeyDown(KeyCode.F10))
+        {
+            POINT cursorPos;
+            GetCursorPos(out cursorPos);
+            modify.com.text = $"위치값: {cursorPos.X},{cursorPos.Y}";
+            modify.mx = cursorPos.X;
+            modify.my = cursorPos.Y;
+            ModifyExit();
         }
         else
         {
@@ -135,7 +179,7 @@ public class HatKeyMAnager : MonoBehaviour
                 info.time = 0.033f;
                 POINT cursorPos;
                 GetCursorPos(out cursorPos);
-                info.com.text = $"마우스 위치값: {cursorPos.X},{cursorPos.Y}";
+                info.com.text = $"위치값: {cursorPos.X},{cursorPos.Y}";
                 info.mx = cursorPos.X;
                 info.my = cursorPos.Y;
                 info.move = true;
@@ -171,19 +215,15 @@ public class HatKeyMAnager : MonoBehaviour
                 else
                     startM = false;
             }
-
         }
-       
-
     }
 
-
+    public Image startBtn;
+    
     public void MacrosStart()
     {
         if(!startM)
         {
-            startM = true;
-
             startNumText.text = Regex.Replace(startNumText.text, @"[^0-9]", "");
             if (int.Parse(startNumText.text) > 0)
             {
@@ -196,6 +236,9 @@ public class HatKeyMAnager : MonoBehaviour
                 else
                 {
                     stat.text = "";
+                    startM = true;
+                    startBtn.color = Color.red;
+                    startNstop.color = Color.white;
                     startNstop.text = "종료하기";
                     StartCoroutine(StartM());
                 }
@@ -208,9 +251,6 @@ public class HatKeyMAnager : MonoBehaviour
         else
         {
             startM = false;
-            startNstop.text = "시작하기";
-            turn.text = "";
-            StopCoroutine(StartM());
         }
        
     }
@@ -219,6 +259,7 @@ public class HatKeyMAnager : MonoBehaviour
     {
         int repetition = int.Parse(repetitionText.text);
         int start = startNum;
+        float wait = 0;
         yield return new WaitForFixedUpdate();
        
         while (start - 1 < m_List.Length && startM)
@@ -244,8 +285,13 @@ public class HatKeyMAnager : MonoBehaviour
             else if (m_List[start - 1].image)
                 m_List[start - 1].Image();
 
-
-            yield return new WaitForSeconds(m_List[start - 1].time);
+            wait = m_List[start - 1].time;
+            while (wait > 0 && startM)
+            {
+                wait -= Time.deltaTime;
+                stat.text = $"남은 대기 시간 : {(int)wait}";
+                yield return null;
+            }
             start++;
         }
         yield return new WaitForFixedUpdate();
@@ -257,29 +303,32 @@ public class HatKeyMAnager : MonoBehaviour
         else
         {
             startM = false;
+            startBtn.color = Color.white;
+            startNstop.color = new Color(0.196f, 0.196f, 0.196f, 1);
             startNstop.text = "시작하기";
             turn.text = "";
+            stat.text = "";
         }
     }
 
     //딜레이 시간 
     public void DelayPop()
     {
-        if(delayPop.activeSelf)
-        {
-            delayPop.SetActive(false);
-           
-        }
+        if (delayPop.activeSelf) { delayPop.SetActive(false); }
         else
         {
             delayPop.SetActive(true);
+            delayText.Select();
             delayText.text = "";
         }
     }
-
     public void SetDelay()
     {
-        if (float.Parse(delayText.text) > 0)
+        if (delayText.text == "")
+        { delayText.text = "0"; }
+          
+
+        if (float.Parse(delayText.text) > 0.033f)
         {
             count++;
             m_List = new Info[count];
@@ -301,8 +350,48 @@ public class HatKeyMAnager : MonoBehaviour
             DelayPop();
         }
         else
-            return;
-        
+        {
+            count++;
+            m_List = new Info[count];
+            Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
+            info.CL();
+            info.num.text = count.ToString();
+
+            info.time = 0.033f;
+            info.com.text = $"{info.time}초 지연";
+            info.mx = 0;
+            info.my = 0;
+            info.delays = true;
+
+            for (int i = 0; i < m_List.Length; i++)
+            {
+                m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
+            }
+
+            DelayPop();
+        }        
+    }
+
+    public InputField mdelayText;
+
+    public void SetMDelay() // 수정 내용
+    {
+        if (mdelayText.text == "")
+        { mdelayText.text = "0"; }
+
+
+        if (float.Parse(mdelayText.text) > 0.033f)
+        {
+            modify.time = float.Parse(mdelayText.text);
+            modify.com.text = $"{modify.time}초 지연";
+            ModifyExit();
+        }
+        else
+        {
+            modify.time = 0.033f;
+            modify.com.text = $"{modify.time}초 지연";
+            ModifyExit();
+        }
     }
 
     //키보드 입력
@@ -368,23 +457,22 @@ public class HatKeyMAnager : MonoBehaviour
     //마우스 좌, 우 , 누르기, 때기 기능
     public void MousePop()
     {
-        if(mousePop.activeSelf)
+        if (mousePop.activeSelf)
+        {
             mousePop.SetActive(false);
-        
+        }
         else
         {
             mousePop.SetActive(true);
-            mouseinfo.text = "마우스 : 좌";
+            mouseinfo.text = "마우스 : ";
+            Direction.SetActive(true);
+            Press.SetActive(false);
         }
-            
-
     }
-
-    public void MouseL()
-    {
-        mouseinfo.text = "마우스 : 좌";
-    }
-    public void MouseR() { mouseinfo.text = "마우스 : 우"; }
+    public GameObject Direction;
+    public GameObject Press;
+    public void MouseL() { mouseinfo.text = "마우스 : 좌"; Direction.SetActive(false); Press.SetActive(true); }
+    public void MouseR() { mouseinfo.text = "마우스 : 우"; Direction.SetActive(false); Press.SetActive(true); }
     public void MousePress()
     {
         count++;
@@ -425,24 +513,49 @@ public class HatKeyMAnager : MonoBehaviour
 
         MousePop();
     }
+    //수정 내용
+    public Text mMouseinfo;
+    public GameObject mDirection;
+    public GameObject mPress;
+
+    public void MMouseL() { mMouseinfo.text = "마우스 : 좌"; mDirection.SetActive(false); mPress.SetActive(true); }
+    public void MMouseR() { mMouseinfo.text = "마우스 : 우"; mDirection.SetActive(false); mPress.SetActive(true); }
+    public void MMMousePress()
+    {
+        modify.mouse = mMouseinfo.text == "마우스 : 우" ? 1 : 0;
+        modify.com.text = $"{mMouseinfo.text} 누르기";
+        modify.m_Down = true;
+        modify.m_Up = false;
+        ModifyExit();
+    }
+    public void MMouseUp()
+    {
+        modify.mouse = mMouseinfo.text == "마우스 : 우" ? 1 : 0;
+        modify.com.text = $"{mMouseinfo.text} 때기";
+        modify.m_Down = false;
+        modify.m_Up = true;
+        ModifyExit();
+    }
+
+
 
     //키보드 누르기, 때기 기능
     public void KeyPopDU()
     {
         if(keyPopDU.activeSelf)
         {
-            keyPopDU.SetActive(false);
             keycode = "";
+            keyPopDU.SetActive(false);
         }
-          
-
         else
         {
             keyPopDU.SetActive(true);
             keyInfo.text = "원하는 키를\n눌러주세요.";
-            keyBtns.SetActive(false);
+            if(keyBtns.activeSelf)
+                keyBtns.SetActive(false);
         }
     }
+
     public void KeyPress()
     {
         count++;
@@ -486,6 +599,25 @@ public class HatKeyMAnager : MonoBehaviour
 
         KeyPopDU();
     }
+    //수정 내용
+    public GameObject mkeyPopDU;
+    public void MKeyPress()
+    {
+        modify.com.text = $"'{keycode}' 누르기";
+        modify.keybd = keycode;
+        modify.k_Down = true;
+        modify.k_Up = false;
+        mMKeyPopDU.SetActive(false);
+        modify = null;
+    }
+    public void MKeyUp()
+    {
+        modify.com.text = $"'{keycode}' 때기";
+        modify.keybd = keycode;
+        modify.k_Down = false;
+        modify.k_Up = true;
+        ModifyExit();
+    }
 
 
     //이미지 찾아 마우스 위치하기 기능
@@ -504,11 +636,15 @@ public class HatKeyMAnager : MonoBehaviour
             imagePop.SetActive(true);
             imagestat.text = "이미지의 파일 경로를 적어주세요.";
             imageInputField.text = "";
+            imageInputField.Select();
         }
     }
 
     public void ImageSet()
     {
+        if (imageInputField.text == "")
+            return;
+
         count++;
         m_List = new Info[count];
         Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
@@ -528,5 +664,50 @@ public class HatKeyMAnager : MonoBehaviour
 
         ImagePop();
     }
+    //수정내용
+    public InputField mimageInputField;
+    public void MImageSet()
+    {
+        if (mimageInputField.text == "")
+            return;
+
+        modify.paths = mimageInputField.text;
+        modify.time = 1f;
+        modify.com.text = $"'{mimageInputField.text}' 유사 이미지 찾기";
+        ModifyExit();
+    }
+
+
+    public void InfoModify()
+    {
+        if (modify.move) { mMovePop.SetActive(true); }
+        else if (modify.m_Down || modify.m_Up) 
+        { 
+            mMousePop.SetActive(true);
+            mDirection.SetActive(true);
+            mPress.SetActive(false);
+        }
+        else if (modify.k_Down || modify.k_Up)
+        {
+            mMKeyPopDU.SetActive(true);
+            mKeyBtns.SetActive(false);
+        }
+        else if (modify.key) { mKeyPop.SetActive(true); }
+        else if (modify.delays) { mDelayPop.SetActive(true); mdelayText.Select(); }
+        else if (modify.image) { mImagePop.SetActive(true); mimageInputField.Select(); }
+    }
+
+    public void ModifyExit()
+    {
+        if (modify.move) { mMovePop.SetActive(false); }
+        else if (modify.m_Down || modify.m_Up) { mMousePop.SetActive(false); }
+        else if (modify.k_Down || modify.k_Up){ mMKeyPopDU.SetActive(false);}
+        else if (modify.key) { mKeyPop.SetActive(false); }
+        else if (modify.delays) { mDelayPop.SetActive(false);  }
+        else if (modify.image) { mImagePop.SetActive(false); }
+
+        modify = null;
+    }
+
 
 }

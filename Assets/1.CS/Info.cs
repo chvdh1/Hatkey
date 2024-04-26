@@ -48,6 +48,9 @@ public class Info : MonoBehaviour
     public bool delays;
     public bool image;
 
+    public Text imstat;
+
+
     public HatKeyMAnager manager;
     string path;
     private void Awake()
@@ -60,6 +63,7 @@ public class Info : MonoBehaviour
     private void Start()
     {
         manager = HatKeyMAnager.manager;
+
     }
     public void NumCK(string numck)
     {
@@ -172,18 +176,21 @@ public class Info : MonoBehaviour
 
         process.WaitForExit();
 
-        if (string.IsNullOrEmpty(error))
+        if (string.IsNullOrEmpty(error) && JsonUtility.FromJson<Vector2>(output).x > 0)
         {
             // JSON 문자열을 파싱하여 사용
             var position = JsonUtility.FromJson<Vector2>(output);
             UnityEngine.Debug.Log($"Position: {position.x}, {position.y}");
             mx = (int)position.x+1;
             my = (int)position.y+1;
+            imstat.text = "";
             MoveCursor();
+            yield return new WaitForFixedUpdate();
+            MouseEvent();
         }
         else
         {
-            UnityEngine.Debug.LogError("Error: " + error);
+            imstat.text = "찾지 못했습니다.";
         }
 
         yield return null;
@@ -231,6 +238,12 @@ public class Info : MonoBehaviour
     public void del()
     {
         manager.Del();
+    }
+
+    public void Modify()
+    {
+        manager.modify = this;
+        manager.InfoModify();
     }
 
     byte Key()
