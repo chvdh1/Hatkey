@@ -25,7 +25,9 @@ public class JData
     public bool[] k_Up;
     public bool[] delays;
     public bool[] image;
+    public float[] accuracy;
     public string[] paths;
+    public string[] imagename;
 
     public int[] imagex;
     public int[] imagey;
@@ -53,7 +55,10 @@ public class JData
         k_Up = new bool[count];
         delays = new bool[count];
         image = new bool[count];
+        accuracy = new float[count];
         paths = new string[count];
+        imagename = new string[count];
+
 
         imagex = new int[count];
         imagey = new int[count];
@@ -80,8 +85,9 @@ public class JData
             k_Up[i] = manager.m_List[i].k_Up;
             delays[i] = manager.m_List[i].delays;
             image[i] = manager.m_List[i].image;
+            accuracy[i] = manager.m_List[i].accuracy;
             paths[i] = manager.m_List[i].paths;
-          
+            imagename[i] = manager.m_List[i].im_name; ;
         }   
     }
 }
@@ -202,20 +208,21 @@ public class DataManager : MonoBehaviour
             info.delays = data.delays[i];
 
             info.image = data.image[i];
+            info.accuracy = data.accuracy[i];
             info.paths = data.paths[i];
-             
+            info.im_name = data.imagename[i];
 
             string mtext = info.mouse == 1 ? "마우스 : 우" : "마우스 : 좌";
 
-            info.com.text = info.move ? $"마우스 위치값: {info.mx},{info.my}" :
+            info.com.text = info.move ? $"위치값: {info.mx},{info.my}" :
                info.click ? $"마우스 클릭(왼)" :
                info.m_Down ? $"{mtext} 누르기" :
                info.m_Up ? $"{mtext} 때기" :
                 info.key ? $"'{info.keybd}' 입력" :
                  info.k_Down ? $"'{info.keybd}' 누르기" :
                   info.k_Up ? $"'{info.keybd}' 때기" :
-                   info.image ? $"'{info.paths}' 유사 이미지 찾기":
-               $"{info.time}초 지연";
+                   info.image ? $"{(int)(info.accuracy * 100)}% 일치하는 '{info.im_name}'이미지 찾기":
+            $"{info.time}초 지연";
 
 
 

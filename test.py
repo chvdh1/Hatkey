@@ -21,6 +21,7 @@ def find_subimage_position(main_image_path, sub_image_path, threshold=0.8):
 if __name__ == "__main__":
     main_image_path = sys.argv[1]
     sub_image_path = sys.argv[2]
-    position = find_subimage_position(main_image_path, sub_image_path)
+    threshold = float(sys.argv[3])
+    position = find_subimage_position(main_image_path, sub_image_path, threshold)
     if position is not None:
         print(json.dumps(position))

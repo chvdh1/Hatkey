@@ -5,6 +5,8 @@ using UnityEngine.UI;
 using System.Text.RegularExpressions;
 using UnityEngine.EventSystems;
 using Unity.VisualScripting;
+using System.IO;
+using System;
 
 public class HatKeyMAnager : MonoBehaviour
 {
@@ -51,8 +53,9 @@ public class HatKeyMAnager : MonoBehaviour
     public GameObject mDelayPop;
     public GameObject mMKeyPopDU;
     public GameObject mImagePop;
-
     public GameObject mKeyBtns;
+    public Slider mAccuracyBar;
+    public Slider accuracyBar;
     public Text mKeyInfo;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -91,6 +94,11 @@ public class HatKeyMAnager : MonoBehaviour
 
         repetitionText.onValueChanged.AddListener(
            (word) => repetitionText.text =
+           Regex.Replace(word, @"[^0-9]", "")
+       );
+
+        notext.onValueChanged.AddListener(
+           (word) => startNumText.text =
            Regex.Replace(word, @"[^0-9]", "")
        );
 
@@ -443,13 +451,12 @@ public class HatKeyMAnager : MonoBehaviour
 
     IEnumerator Assign()
     {
-
         yield return new WaitForFixedUpdate();
         for (int i = 0; i < parentObj.childCount; i++)
         {
             m_List[i] = parentObj.GetChild(i).GetComponent<Info>();
             m_List[i].num.text = (i + 1).ToString();
-            yield return new WaitForFixedUpdate();
+            yield return null;
         }
     }
 
@@ -635,6 +642,7 @@ public class HatKeyMAnager : MonoBehaviour
         {
             imagePop.SetActive(true);
             imagestat.text = "이미지의 파일 경로를 적어주세요.";
+            accuracyBar.value = 0.8f;
             imageInputField.text = "";
             imageInputField.Select();
         }
@@ -649,11 +657,12 @@ public class HatKeyMAnager : MonoBehaviour
         m_List = new Info[count];
         Info info = Instantiate(infoobj, parentObj).GetComponent<Info>();
         info.CL();
+        info.im_name = ExtractFileNameWithoutExtension(modify.paths);
         info.num.text = count.ToString();
         info.paths = imageInputField.text;
-
+        info.accuracy = accuracyBar.value;
         info.time = 1f;
-        info.com.text = $"'{imageInputField.text}' 유사 이미지 찾기";
+        info.com.text = $"{(int)(info.accuracy * 100)}% 일치하는 '{info.im_name}'이미지 찾기";
 
         info.image = true;
 
@@ -672,14 +681,55 @@ public class HatKeyMAnager : MonoBehaviour
             return;
 
         modify.paths = mimageInputField.text;
+        modify.im_name = ExtractFileNameWithoutExtension(modify.paths);
         modify.time = 1f;
-        modify.com.text = $"'{mimageInputField.text}' 유사 이미지 찾기";
+        modify.accuracy = mAccuracyBar.value;
+        modify.com.text = $"{(int)(modify.accuracy * 100)}% 일치하는 '{modify.im_name}'이미지 찾기";
         ModifyExit();
     }
+    public string ExtractFileNameWithoutExtension(string filePath)
+    {
+        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
+        return fileNameWithoutExtension;
+    }
 
+    public GameObject changingPop;
+    public InputField notext;
+    public int num; 
+    public void ChangingTheOrder()
+    {
+        changingPop.SetActive(true);
+        notext.Select();
+        notext.text = "";
+    }
+    public void ChangingTheOrderCK()
+    {
+        int childnum = parentObj.childCount;
+
+        if (notext.text == "")
+            notext.text = "0";
+
+
+        num = int.Parse(notext.text) > childnum ? childnum :  int.Parse(notext.text);
+        Debug.Log(num);
+        Debug.Log(int.Parse(notext.text));
+        if (num == 0 )
+        {
+            for (int i = 0; i < parentObj.childCount; i++)
+            {
+                if(modify == parentObj.GetChild(i))
+                {
+                    num = i+1;
+                    break;
+                }
+            }
+        }
+        InfoModify();
+    }
 
     public void InfoModify()
     {
+        changingPop.SetActive(false);
         if (modify.move) { mMovePop.SetActive(true); }
         else if (modify.m_Down || modify.m_Up) 
         { 
@@ -693,8 +743,10 @@ public class HatKeyMAnager : MonoBehaviour
             mKeyBtns.SetActive(false);
         }
         else if (modify.key) { mKeyPop.SetActive(true); }
-        else if (modify.delays) { mDelayPop.SetActive(true); mdelayText.Select(); }
-        else if (modify.image) { mImagePop.SetActive(true); mimageInputField.Select(); }
+        else if (modify.delays) { mDelayPop.SetActive(true); mdelayText.Select(); mdelayText.text = "0"; }
+        else if (modify.image) { mImagePop.SetActive(true); mimageInputField.Select(); mAccuracyBar.value = 0.8f;
+            mimageInputField.text = "";
+        }
     }
 
     public void ModifyExit()
@@ -705,6 +757,10 @@ public class HatKeyMAnager : MonoBehaviour
         else if (modify.key) { mKeyPop.SetActive(false); }
         else if (modify.delays) { mDelayPop.SetActive(false);  }
         else if (modify.image) { mImagePop.SetActive(false); }
+
+        modify.transform.SetSiblingIndex(num-1);
+
+        StartCoroutine(Assign());
 
         modify = null;
     }

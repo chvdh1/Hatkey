@@ -47,7 +47,8 @@ public class Info : MonoBehaviour
     public bool k_Up;
     public bool delays;
     public bool image;
-
+    public string im_name;
+    public float accuracy;
     public Text imstat;
 
 
@@ -159,9 +160,10 @@ public class Info : MonoBehaviour
 
     IEnumerator FindSubimagePosition()
     {
+        imstat.text = "찾는 중...";
         ProcessStartInfo psi = new ProcessStartInfo();
         psi.FileName = "py";
-        psi.Arguments = string.Format("{0} {1} {2}", "test.py", mainImagePath, path);
+        psi.Arguments = string.Format("{0} {1} {2} {3}", "test.py", mainImagePath, path, accuracy);
         psi.UseShellExecute = false;
         psi.CreateNoWindow = true;
         psi.RedirectStandardOutput = true;
@@ -191,6 +193,7 @@ public class Info : MonoBehaviour
         else
         {
             imstat.text = "찾지 못했습니다.";
+            UnityEngine.Debug.LogError("Error: " + error);
         }
 
         yield return null;
@@ -242,8 +245,9 @@ public class Info : MonoBehaviour
 
     public void Modify()
     {
+
         manager.modify = this;
-        manager.InfoModify();
+        manager.ChangingTheOrder();
     }
 
     byte Key()
